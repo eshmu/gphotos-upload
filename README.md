@@ -1,5 +1,25 @@
 # gphotos-upload
 Simple but flexible script to upload photos to Google Photos. Useful if you have photos in a directory structure that you want to reflect as Google Photos albums.
+
+## Usage 
+
+`usage: upload.py [-h] [--auth  auth_file] [--album album_name]
+                 [--log log_file]
+                 [photo [photo ...]]
+
+Upload photos to Google Photos.
+
+positional arguments:
+  photo               filename of a photo to upload
+
+optional arguments:
+  -h, --help          show this help message and exit
+  --auth  auth_file   file for reading/storing user authentication tokens
+  --album album_name  name of photo album to create (if it doesn't exist). Any
+                      uploaded photos will be added to this album.
+  --log log_file      name of output file for log messages`
+
+
 ## Setup
 
 ### Obtaining a Google Photos API key
