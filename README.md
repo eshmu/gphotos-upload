@@ -3,7 +3,8 @@ Simple but flexible script to upload photos to Google Photos. Useful if you have
 
 ## Usage 
 
-`usage: upload.py [-h] [--auth  auth_file] [--album album_name]
+```
+usage: upload.py [-h] [--auth  auth_file] [--album album_name]
                  [--log log_file]
                  [photo [photo ...]]
 
@@ -17,7 +18,8 @@ optional arguments:
   --auth  auth_file   file for reading/storing user authentication tokens
   --album album_name  name of photo album to create (if it doesn't exist). Any
                       uploaded photos will be added to this album.
-  --log log_file      name of output file for log messages`
+  --log log_file      name of output file for log messages
+```
 
 
 ## Setup
