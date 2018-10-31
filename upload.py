@@ -177,8 +177,8 @@ def upload_photos(session, photo_file_list, album_name):
 
     try:
         del(session.headers["Content-type"])
-        del(session.headers["X-Goog-Upload-File-Name"])
         del(session.headers["X-Goog-Upload-Protocol"])
+        del(session.headers["X-Goog-Upload-File-Name"])
     except KeyError:
         pass
 
