@@ -2,9 +2,10 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import AuthorizedSession
 from google.oauth2.credentials import Credentials
 import json
-import os.path
+import os
 import argparse
 import logging
+
 
 def parse_args(arg_input=None):
     parser = argparse.ArgumentParser(description='Upload photos to Google Photos.')
@@ -31,6 +32,7 @@ def auth(scopes):
                                         open_browser=True)
 
     return credentials
+
 
 def get_authorized_session(auth_token_file):
 
@@ -77,8 +79,8 @@ def save_cred(cred, auth_file):
     with open(auth_file, 'w') as f:
         print(json.dumps(cred_dict), file=f)
 
-# Generator to loop through all albums
 
+# Generator to loop through all albums
 def getAlbums(session, appCreatedOnly=False):
 
     params = {
@@ -103,6 +105,7 @@ def getAlbums(session, appCreatedOnly=False):
 
         else:
             return
+
 
 def create_or_retrieve_album(session, album_title):
 
@@ -129,7 +132,8 @@ def create_or_retrieve_album(session, album_title):
         logging.error("Could not find or create photo album '\{0}\'. Server Response: {1}".format(album_title, resp))
         return None
 
-def upload_photos(session, photo_file_list, album_name):
+
+def upload_photos(session, input_path, album_name):
 
     album_id = create_or_retrieve_album(session, album_name) if album_name else None
 
@@ -137,10 +141,19 @@ def upload_photos(session, photo_file_list, album_name):
     if album_name and not album_id:
         return
 
+    # if input_path is a directory - prepare list of all files within this directory
+    # also all subdirectories
+    if len(input_path) == 1 and os.path.isdir(input_path[0]):
+        list_of_files = list()
+        for (dirpath, dirnames, filenames) in os.walk(input_path[0]):
+            list_of_files += [os.path.join(dirpath, file) for file in filenames]
+    else:
+        list_of_files = input_path
+
     session.headers["Content-type"] = "application/octet-stream"
     session.headers["X-Goog-Upload-Protocol"] = "raw"
 
-    for photo_file_name in photo_file_list:
+    for photo_file_name in list_of_files:
 
             try:
                 photo_file = open(photo_file_name, mode='rb')
