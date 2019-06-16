@@ -1,10 +1,4 @@
 
 client\.json
 
-test_dir/\.thumbnails/test_pic_2\.jpg
-
-test_dir/\.thumbnails/test_thumbnails\.jpg
-
-test_dir/test-dir-2/test_pic_2\.jpg
-
-test_dir/test-dir-2/test_pic\.jpg
+test_dir/
