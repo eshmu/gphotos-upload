@@ -2,9 +2,16 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import AuthorizedSession
 from google.oauth2.credentials import Credentials
 import json
-import os.path
+import os
 import argparse
+import progressbar
 import logging
+
+
+IGNORE_DIRECTORIES = [
+    '.thumbnails'
+]
+
 
 def parse_args(arg_input=None):
     parser = argparse.ArgumentParser(description='Upload photos to Google Photos.')
@@ -31,6 +38,7 @@ def auth(scopes):
                                         open_browser=True)
 
     return credentials
+
 
 def get_authorized_session(auth_token_file):
 
@@ -77,9 +85,11 @@ def save_cred(cred, auth_file):
     with open(auth_file, 'w') as f:
         print(json.dumps(cred_dict), file=f)
 
-# Generator to loop through all albums
 
 def getAlbums(session, appCreatedOnly=False):
+    """
+    Generator to loop through all albums
+    """
 
     params = {
             'excludeNonAppCreatedData': appCreatedOnly
@@ -103,6 +113,7 @@ def getAlbums(session, appCreatedOnly=False):
 
         else:
             return
+
 
 def create_or_retrieve_album(session, album_title):
 
@@ -129,18 +140,35 @@ def create_or_retrieve_album(session, album_title):
         logging.error("Could not find or create photo album '\{0}\'. Server Response: {1}".format(album_title, resp))
         return None
 
-def upload_photos(session, photo_file_list, album_name):
 
+def upload_photos(session, input_path, album_name, enable_progressbar):
     album_id = create_or_retrieve_album(session, album_name) if album_name else None
 
     # interrupt upload if an upload was requested but could not be created
     if album_name and not album_id:
         return
 
+    # if input_path is a directory - prepare list of all files within this directory
+    # also all subdirectories
+    if len(input_path) == 1 and os.path.isdir(input_path[0]):
+        list_of_files = list()
+        for (dirpath, dirnames, filenames) in os.walk(input_path[0], topdown=True):
+            # exclude directories mentioned in IGNORE_DIRECTORIES
+            # see https://stackoverflow.com/questions/19859840/excluding-directories-in-os-walk
+            dirnames[:] = [d for d in dirnames if d not in IGNORE_DIRECTORIES]
+            list_of_files += [os.path.join(dirpath, file) for file in filenames]
+    else:
+        list_of_files = input_path
+
+    if enable_progressbar:
+        bar = progressbar.ProgressBar(maxval=len(list_of_files), \
+        widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
+        bar.start()
+
     session.headers["Content-type"] = "application/octet-stream"
     session.headers["X-Goog-Upload-Protocol"] = "raw"
 
-    for photo_file_name in photo_file_list:
+    for i, photo_file_name in enumerate(list_of_files):
 
             try:
                 photo_file = open(photo_file_name, mode='rb')
@@ -152,12 +180,26 @@ def upload_photos(session, photo_file_list, album_name):
             session.headers["X-Goog-Upload-File-Name"] = os.path.basename(photo_file_name)
 
             logging.info("Uploading photo -- \'{}\'".format(photo_file_name))
+            if enable_progressbar:
+                bar.update(i+1)
 
             upload_token = session.post('https://photoslibrary.googleapis.com/v1/uploads', photo_bytes)
 
             if (upload_token.status_code == 200) and (upload_token.content):
-
-                create_body = json.dumps({"albumId":album_id, "newMediaItems":[{"description":"","simpleMediaItem":{"uploadToken":upload_token.content.decode()}}]}, indent=4)
+                create_body = json.dumps(
+                    {
+                        "albumId": album_id,
+                        "newMediaItems": [
+                            {
+                                "description": "",
+                                "simpleMediaItem": {
+                                    "uploadToken": upload_token.content.decode()
+                                }
+                            }
+                        ]
+                    }, 
+                    indent=4
+                )
 
                 resp = session.post('https://photoslibrary.googleapis.com/v1/mediaItems:batchCreate', create_body).json()
 
@@ -182,6 +224,7 @@ def upload_photos(session, photo_file_list, album_name):
     except KeyError:
         pass
 
+
 def main():
 
     args = parse_args()
@@ -189,11 +232,16 @@ def main():
     logging.basicConfig(format='%(asctime)s %(module)s.%(funcName)s:%(levelname)s:%(message)s',
                     datefmt='%m/%d/%Y %I_%M_%S %p',
                     filename=args.log_file,
-                    level=logging.INFO)
+                    level=logging.WARNING)
+
+    # if logging level is higher than INFO - enable progressbar
+    enable_progressbar = False
+    if logging.root.level > 20:
+        enable_progressbar = True
 
     session = get_authorized_session(args.auth_file)
 
-    upload_photos(session, args.photos, args.album_name)
+    upload_photos(session, args.photos, args.album_name, enable_progressbar)
 
     # As a quick status check, dump the albums and their key attributes
 
@@ -201,6 +249,7 @@ def main():
 
     for a in getAlbums(session):
         print("{:<50} | {:>8} | {} ".format(a["title"],a.get("mediaItemsCount", "0"), str(a.get("isWriteable", False))))
+
 
 if __name__ == '__main__':
   main()
