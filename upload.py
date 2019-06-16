@@ -7,6 +7,11 @@ import argparse
 import logging
 
 
+IGNORE_DIRECTORIES = [
+    '.thumbnails'
+]
+
+
 def parse_args(arg_input=None):
     parser = argparse.ArgumentParser(description='Upload photos to Google Photos.')
     parser.add_argument('--auth ', metavar='auth_file', dest='auth_file',
@@ -80,8 +85,10 @@ def save_cred(cred, auth_file):
         print(json.dumps(cred_dict), file=f)
 
 
-# Generator to loop through all albums
 def getAlbums(session, appCreatedOnly=False):
+    """
+    Generator to loop through all albums
+    """
 
     params = {
             'excludeNonAppCreatedData': appCreatedOnly
@@ -145,7 +152,10 @@ def upload_photos(session, input_path, album_name):
     # also all subdirectories
     if len(input_path) == 1 and os.path.isdir(input_path[0]):
         list_of_files = list()
-        for (dirpath, dirnames, filenames) in os.walk(input_path[0]):
+        for (dirpath, dirnames, filenames) in os.walk(input_path[0], topdown=True):
+            # exclude directories mentioned in IGNORE_DIRECTORIES
+            # see https://stackoverflow.com/questions/19859840/excluding-directories-in-os-walk
+            dirnames[:] = [d for d in dirnames if d not in IGNORE_DIRECTORIES]
             list_of_files += [os.path.join(dirpath, file) for file in filenames]
     else:
         list_of_files = input_path
@@ -169,8 +179,20 @@ def upload_photos(session, input_path, album_name):
             upload_token = session.post('https://photoslibrary.googleapis.com/v1/uploads', photo_bytes)
 
             if (upload_token.status_code == 200) and (upload_token.content):
-
-                create_body = json.dumps({"albumId":album_id, "newMediaItems":[{"description":"","simpleMediaItem":{"uploadToken":upload_token.content.decode()}}]}, indent=4)
+                create_body = json.dumps(
+                    {
+                        "albumId": album_id,
+                        "newMediaItems": [
+                            {
+                                "description": "",
+                                "simpleMediaItem": {
+                                    "uploadToken": upload_token.content.decode()
+                                }
+                            }
+                        ]
+                    }, 
+                    indent=4
+                )
 
                 resp = session.post('https://photoslibrary.googleapis.com/v1/mediaItems:batchCreate', create_body).json()
 
@@ -195,6 +217,7 @@ def upload_photos(session, input_path, album_name):
     except KeyError:
         pass
 
+
 def main():
 
     args = parse_args()
@@ -214,6 +237,7 @@ def main():
 
     for a in getAlbums(session):
         print("{:<50} | {:>8} | {} ".format(a["title"],a.get("mediaItemsCount", "0"), str(a.get("isWriteable", False))))
+
 
 if __name__ == '__main__':
   main()
