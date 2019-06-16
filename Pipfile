@@ -5,8 +5,10 @@ name = "pypi"
 
 [packages]
 google-auth-oauthlib = "*"
+progressbar = "*"
 
 [dev-packages]
+ipdb = "*"
 
 [requires]
 python_version = "3.7"
