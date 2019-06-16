@@ -4,6 +4,7 @@ from google.oauth2.credentials import Credentials
 import json
 import os
 import argparse
+import progressbar
 import logging
 
 
@@ -140,8 +141,7 @@ def create_or_retrieve_album(session, album_title):
         return None
 
 
-def upload_photos(session, input_path, album_name):
-
+def upload_photos(session, input_path, album_name, enable_progressbar):
     album_id = create_or_retrieve_album(session, album_name) if album_name else None
 
     # interrupt upload if an upload was requested but could not be created
@@ -160,10 +160,15 @@ def upload_photos(session, input_path, album_name):
     else:
         list_of_files = input_path
 
+    if enable_progressbar:
+        bar = progressbar.ProgressBar(maxval=len(list_of_files), \
+        widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
+        bar.start()
+
     session.headers["Content-type"] = "application/octet-stream"
     session.headers["X-Goog-Upload-Protocol"] = "raw"
 
-    for photo_file_name in list_of_files:
+    for i, photo_file_name in enumerate(list_of_files):
 
             try:
                 photo_file = open(photo_file_name, mode='rb')
@@ -175,6 +180,8 @@ def upload_photos(session, input_path, album_name):
             session.headers["X-Goog-Upload-File-Name"] = os.path.basename(photo_file_name)
 
             logging.info("Uploading photo -- \'{}\'".format(photo_file_name))
+            if enable_progressbar:
+                bar.update(i+1)
 
             upload_token = session.post('https://photoslibrary.googleapis.com/v1/uploads', photo_bytes)
 
@@ -225,11 +232,16 @@ def main():
     logging.basicConfig(format='%(asctime)s %(module)s.%(funcName)s:%(levelname)s:%(message)s',
                     datefmt='%m/%d/%Y %I_%M_%S %p',
                     filename=args.log_file,
-                    level=logging.INFO)
+                    level=logging.WARNING)
+
+    # if logging level is higher than INFO - enable progressbar
+    enable_progressbar = False
+    if logging.root.level > 20:
+        enable_progressbar = True
 
     session = get_authorized_session(args.auth_file)
 
-    upload_photos(session, args.photos, args.album_name)
+    upload_photos(session, args.photos, args.album_name, enable_progressbar)
 
     # As a quick status check, dump the albums and their key attributes
 
