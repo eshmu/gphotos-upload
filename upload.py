@@ -15,6 +15,9 @@ def parse_args(arg_input=None):
                     type=str)
     parser.add_argument('--log', metavar='log_file', dest='log_file',
                     help='name of output file for log messages')
+    parser.add_argument("--sharing", metavar='sharing', dest='sharing', default=False,
+                    help='{true|false} if true, add sharing option to newly created albums.',
+                    type=bool),
     parser.add_argument('photos', metavar='photo',type=str, nargs='*',
                     help='filename of a photo to upload')
     return parser.parse_args(arg_input)
@@ -105,7 +108,7 @@ def getAlbums(session, appCreatedOnly=False):
         else:
             return
 
-def create_or_retrieve_album(session, album_title):
+def create_or_retrieve_album(session, album_title, sharing):
 
 # Find albums created by this app to see if one matches album_title
 
@@ -125,14 +128,17 @@ def create_or_retrieve_album(session, album_title):
 
     if "id" in resp:
         logging.info("Uploading into NEW photo album -- \'{0}\'".format(album_title))
+        if sharing:
+            share_option = json.dumps({"sharedAlbumOptions":{"isCollaborative":False, "isCommentable":False}})
+            shareresp = session.post('https://photoslibrary.googleapis.com/v1/albums/{0}:share'.format(resp['id']), share_option).json()
         return resp['id']
     else:
         logging.error("Could not find or create photo album '\{0}\'. Server Response: {1}".format(album_title, resp))
         return None
 
-def upload_photos(session, photo_file_list, album_name):
+def upload_photos(session, photo_file_list, album_name, sharing):
 
-    album_id = create_or_retrieve_album(session, album_name) if album_name else None
+    album_id = create_or_retrieve_album(session, album_name, sharing) if album_name else None
 
     # interrupt upload if an upload was requested but could not be created
     if album_name and not album_id:
@@ -194,7 +200,7 @@ def main():
 
     session = get_authorized_session(args.auth_file)
 
-    upload_photos(session, args.photos, args.album_name)
+    upload_photos(session, args.photos, args.album_name, args.sharing)
 
     # As a quick status check, dump the albums and their key attributes
 
