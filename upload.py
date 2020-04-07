@@ -11,7 +11,8 @@ def parse_args(arg_input=None):
     parser.add_argument('--auth ', metavar='auth_file', dest='auth_file',
                     help='file for reading/storing user authentication tokens')
     parser.add_argument('--album', metavar='album_name', dest='album_name',
-                    help='name of photo album to create (if it doesn\'t exist). Any uploaded photos will be added to this album.')
+                    help='name of photo album to create (if it doesn\'t exist). Any uploaded photos will be added to this album.',
+                    type=str)
     parser.add_argument('--log', metavar='log_file', dest='log_file',
                     help='name of output file for log messages')
     parser.add_argument('photos', metavar='photo',type=str, nargs='*',
