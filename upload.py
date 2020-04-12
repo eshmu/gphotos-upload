@@ -4,6 +4,7 @@ from google.oauth2.credentials import Credentials
 import json
 import os.path
 import argparse
+from pathlib import Path
 import logging
 
 
@@ -16,8 +17,9 @@ def parse_args(arg_input=None):
                         help='name of photo album to create (if it doesn\'t exist). Any uploaded photos will be added to this album.')
     parser.add_argument('--log', metavar='log_file', dest='log_file',
                         help='name of output file for log messages')
-    parser.add_argument('photos', metavar='photo', type=str, nargs='*',
-                        help='filename of a photo to upload')
+    parser.add_argument('photos', metavar='photo', type=lambda p: Path(p).absolute(),
+                        default=Path(__file__).absolute().parent / "data",
+                        help='path to the directory containing image files (filenames must end with .jpg extension)')
     return parser.parse_args(arg_input)
 
 
@@ -145,7 +147,7 @@ def upload_photos(session, photo_file_list, album_name):
     session.headers["Content-type"] = "application/octet-stream"
     session.headers["X-Goog-Upload-Protocol"] = "raw"
 
-    for photo_file_name in photo_file_list:
+    for photo_file_name in photo_file_list.glob('**/*.jpg'):
 
         try:
             photo_file = open(photo_file_name, mode='rb')
