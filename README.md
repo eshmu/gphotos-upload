@@ -1,37 +1,33 @@
 # gphotos-upload
 Simple but flexible script to upload photos to Google Photos. Useful if you have photos in a directory structure that you want to reflect as Google Photos albums.
 
-## Usage 
+## Usage
 
 ```
-usage: upload.py [-h] [--auth  auth_file] [--album album_name]
-                 [--log log_file]
-                 [photo [photo ...]]
+usage: upload.py [-h] [--auth  auth_file] [--album album_name] [--log log_file] photo_dir
 
 Upload photos to Google Photos.
 
 positional arguments:
-  photo               filename of a photo to upload
+  photo_dir           path to the directory containing image files (filenames must end with .jpg extension)
 
 optional arguments:
   -h, --help          show this help message and exit
-  --auth  auth_file   file for reading/storing user authentication tokens
-  --album album_name  name of photo album to create (if it doesn't exist). Any
-                      uploaded photos will be added to this album.
+  --auth  auth_file   file for reading/storing user authentication tokens. Default ./client_secret.json
+  --album album_name  name of photo album to create (if it has not been created by this script). Any uploaded photos will be added to this album.
   --log log_file      name of output file for log messages
 ```
 
 
 ## Setup
 
-### Obtaining a Google Photos API key
+### Obtaining Google Photos API credentials
 
-1. Obtain a Google Photos API key (Client ID and Client Secret) by following the instructions on [Getting started with Google Photos REST APIs](https://developers.google.com/photos/library/guides/get-started)
+1. Obtain a Google Photos API credentials (Client ID and Client Secret) by following the instructions on [Getting started with Google Photos REST APIs](https://developers.google.com/photos/library/guides/get-started)
 
 **NOTE** When selecting your application type in Step 4 of "Request an OAuth 2.0 client ID", please select "Other". There's also no need to carry out step 5 in that section.
 
-2. Replace `YOUR_CLIENT_ID` in the client_id.json file with the provided Client ID. 
-3. Replace `YOUR_CLIENT_SECRET` in the client_id.json file wiht the provided Client Secret.
+2. Download the credentials file to a secure place in your machine. The path to this file should be passed to upload.py script by using --auth optional argument. Otherwise, the credentials file will be assumed to be at ./client_secret.json (what would probably be wrong)
 
 ### Installing dependencies and running the script
 
@@ -40,6 +36,5 @@ optional arguments:
 3. Change to the directory where you installed this script
 4. Run `pipenv install` to download and install all the dependencies
 5. Run `pipenv shell` to open a shell with all the dependencies available (you'll need to do this every time you want to run the script)
-6. Now run the script via `python upload.py` as desired. Use `python upload.py -h` to get help.
+6. Now run the script via `python upload.py` as desired. Use `python upload.py -h` to get help. As stated in previous section, you should probably use --auth option here
 
- 
