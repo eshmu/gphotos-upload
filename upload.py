@@ -15,11 +15,11 @@ def parse_args(arg_input=None):
                     type=str)
     parser.add_argument('--log', metavar='log_file', dest='log_file',
                     help='name of output file for log messages')
-    parser.add_argument("--sharing", metavar='sharing', dest='sharing', default=False,
+    parser.add_argument("--sharing", metavar='sharing', dest='sharing', default=True,
                     help='{true|false} if true, add sharing option to newly created albums.',
                     type=bool),
     parser.add_argument('photos', metavar='photo',type=str, nargs='*',
-                    help='filename of a photo to upload')
+                    help='filename of a photo to upload'),
     return parser.parse_args(arg_input)
 
 
