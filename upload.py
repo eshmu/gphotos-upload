@@ -2,6 +2,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import AuthorizedSession
 from google.oauth2.credentials import Credentials
 import json
+import glob
 import os.path
 import argparse
 import logging
@@ -93,7 +94,7 @@ def getAlbums(session, appCreatedOnly=False):
 
         albums = session.get('https://photoslibrary.googleapis.com/v1/albums', params=params).json()
 
-        logging.debug("Server response: {}".format(albums))
+        #logging.debug("Server response: {}".format(albums))
 
         if 'albums' in albums:
 
@@ -189,6 +190,18 @@ def upload_photos(session, photo_file_list, album_name, sharing):
     except KeyError:
         pass
 
+# NOTE:  Need to follow these specific patterns for the program to work!!!
+# returns a list of jpg files from the current directory, if not
+# returns a list of jpg files from the jpg subdirectory directory, if not
+# returns a list of jpg files from the camerajpg subdirectory directory
+def get_photos():
+    photos = glob.glob('*.jpg')
+    if len(photos) == 0:
+        photos = glob.glob('jpg/*.jpg')
+    if len(photos) == 0:
+        photos = glob.glob('camera\*jpg/*.jpg')
+    return photos
+
 def main():
 
     args = parse_args()
@@ -205,16 +218,14 @@ def main():
     # if no album name is given, use the current directly as the album name
     if not args.album_name:
         args.album_name = os.path.basename(os.getcwd())
+
     session = get_authorized_session(args.auth_file)
-
+    
+    # if no photos are given, use get_photos
+    if len(args.photos) == 0:
+        args.photos = get_photos()
+    # print(args.photos)
     upload_photos(session, args.photos, args.album_name, args.sharing)
-
-    # As a quick status check, dump the albums and their key attributes
-
-    print("{:<50} | {:>8} | {} ".format("PHOTO ALBUM","# PHOTOS", "IS WRITEABLE?"))
-
-    for a in getAlbums(session):
-        print("{:<50} | {:>8} | {} ".format(a.get("title", ""),a.get("mediaItemsCount", "0"), str(a.get("isWriteable", False))))
 
 if __name__ == '__main__':
   main()
