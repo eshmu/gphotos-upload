@@ -202,6 +202,9 @@ def main():
     if not args.auth_file:
         args.auth_file = os.path.dirname(os.path.realpath(__file__)) + os.sep + "client_id.json"
     
+    # if no album name is given, use the current directly as the album name
+    if not args.album_name:
+        args.album_name = os.path.basename(os.getcwd())
     session = get_authorized_session(args.auth_file)
 
     upload_photos(session, args.photos, args.album_name, args.sharing)
