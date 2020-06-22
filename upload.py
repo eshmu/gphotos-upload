@@ -198,6 +198,10 @@ def main():
                     filename=args.log_file,
                     level=logging.INFO)
 
+    # if no auth_file is given, use the directory of the called python file and used client_id.json as the auth file name
+    if not args.auth_file:
+        args.auth_file = os.path.dirname(os.path.realpath(__file__)) + os.sep + "client_id.json"
+    
     session = get_authorized_session(args.auth_file)
 
     upload_photos(session, args.photos, args.album_name, args.sharing)
