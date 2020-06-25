@@ -199,7 +199,7 @@ def get_photos():
     if len(photos) == 0:
         photos = glob.glob('jpg/*.jpg')
     if len(photos) == 0:
-        photos = glob.glob('camera\*jpg/*.jpg')
+        photos = glob.glob('camera\*jpg.jpg')
     return photos
 
 def main():
