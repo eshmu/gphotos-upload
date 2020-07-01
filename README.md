@@ -5,7 +5,7 @@ Simple but flexible script to upload photos to Google Photos. Useful if you have
 
 ```
 usage: upload.py [-h] [--auth  auth_file] [--album album_name]
-                 [--log log_file]
+                 [--log log_file] [--sharing sharing]
                  [photo [photo ...]]
 
 Upload photos to Google Photos.
@@ -19,6 +19,8 @@ optional arguments:
   --album album_name  name of photo album to create (if it doesn't exist). Any
                       uploaded photos will be added to this album.
   --log log_file      name of output file for log messages
+  --sharing sharing   {true|false} if true, add sharing option to newly
+                      created albums.
 ```
 
 

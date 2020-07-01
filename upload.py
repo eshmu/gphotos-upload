@@ -2,6 +2,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import AuthorizedSession
 from google.oauth2.credentials import Credentials
 import json
+import glob
 import os.path
 import argparse
 import logging
@@ -11,11 +12,15 @@ def parse_args(arg_input=None):
     parser.add_argument('--auth ', metavar='auth_file', dest='auth_file',
                     help='file for reading/storing user authentication tokens')
     parser.add_argument('--album', metavar='album_name', dest='album_name',
-                    help='name of photo album to create (if it doesn\'t exist). Any uploaded photos will be added to this album.')
+                    help='name of photo album to create (if it doesn\'t exist). Any uploaded photos will be added to this album.',
+                    type=str)
     parser.add_argument('--log', metavar='log_file', dest='log_file',
                     help='name of output file for log messages')
+    parser.add_argument("--sharing", metavar='sharing', dest='sharing', default=True,
+                    help='{true|false} if true, add sharing option to newly created albums.',
+                    type=bool),
     parser.add_argument('photos', metavar='photo',type=str, nargs='*',
-                    help='filename of a photo to upload')
+                    help='filename of a photo to upload'),
     return parser.parse_args(arg_input)
 
 
@@ -89,7 +94,7 @@ def getAlbums(session, appCreatedOnly=False):
 
         albums = session.get('https://photoslibrary.googleapis.com/v1/albums', params=params).json()
 
-        logging.debug("Server response: {}".format(albums))
+        #logging.debug("Server response: {}".format(albums))
 
         if 'albums' in albums:
 
@@ -104,7 +109,7 @@ def getAlbums(session, appCreatedOnly=False):
         else:
             return
 
-def create_or_retrieve_album(session, album_title):
+def create_or_retrieve_album(session, album_title, sharing):
 
 # Find albums created by this app to see if one matches album_title
 
@@ -124,14 +129,17 @@ def create_or_retrieve_album(session, album_title):
 
     if "id" in resp:
         logging.info("Uploading into NEW photo album -- \'{0}\'".format(album_title))
+        if sharing:
+            share_option = json.dumps({"sharedAlbumOptions":{"isCollaborative":False, "isCommentable":False}})
+            shareresp = session.post('https://photoslibrary.googleapis.com/v1/albums/{0}:share'.format(resp['id']), share_option).json()
         return resp['id']
     else:
         logging.error("Could not find or create photo album '\{0}\'. Server Response: {1}".format(album_title, resp))
         return None
 
-def upload_photos(session, photo_file_list, album_name):
+def upload_photos(session, photo_file_list, album_name, sharing):
 
-    album_id = create_or_retrieve_album(session, album_name) if album_name else None
+    album_id = create_or_retrieve_album(session, album_name, sharing) if album_name else None
 
     # interrupt upload if an upload was requested but could not be created
     if album_name and not album_id:
@@ -182,6 +190,18 @@ def upload_photos(session, photo_file_list, album_name):
     except KeyError:
         pass
 
+# NOTE:  Need to follow these specific patterns for the program to work!!!
+# returns a list of jpg files from the current directory, if not
+# returns a list of jpg files from the jpg subdirectory directory, if not
+# returns a list of jpg files from the camerajpg subdirectory directory
+def get_photos():
+    photos = glob.glob('*.jpg')
+    if len(photos) == 0:
+        photos = glob.glob('jpg/*.jpg')
+    if len(photos) == 0:
+        photos = glob.glob('camerajpg/*.jpg')
+    return photos
+
 def main():
 
     args = parse_args()
@@ -191,16 +211,21 @@ def main():
                     filename=args.log_file,
                     level=logging.INFO)
 
+    # if no auth_file is given, use the directory of the called python file and used client_id.json as the auth file name
+    if not args.auth_file:
+        args.auth_file = os.path.dirname(os.path.realpath(__file__)) + os.sep + "client_id.json"
+    
+    # if no album name is given, use the current directly as the album name
+    if not args.album_name:
+        args.album_name = os.path.basename(os.getcwd())
+
     session = get_authorized_session(args.auth_file)
-
-    upload_photos(session, args.photos, args.album_name)
-
-    # As a quick status check, dump the albums and their key attributes
-
-    print("{:<50} | {:>8} | {} ".format("PHOTO ALBUM","# PHOTOS", "IS WRITEABLE?"))
-
-    for a in getAlbums(session):
-        print("{:<50} | {:>8} | {} ".format(a["title"],a.get("mediaItemsCount", "0"), str(a.get("isWriteable", False))))
+    
+    # if no photos are given, use get_photos
+    if len(args.photos) == 0:
+        args.photos = get_photos()
+    # print(args.photos)
+    upload_photos(session, args.photos, args.album_name, args.sharing)
 
 if __name__ == '__main__':
   main()
