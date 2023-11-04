@@ -8,7 +8,7 @@ import logging
 
 def parse_args(arg_input=None):
     parser = argparse.ArgumentParser(description='Upload photos to Google Photos.')
-    parser.add_argument('--auth ', metavar='auth_file', dest='auth_file',
+    parser.add_argument('--auth ', metavar='auth_file', dest='auth_file', default='client_id.json',
                     help='file for reading/storing user authentication tokens')
     parser.add_argument('--album', metavar='album_name', dest='album_name',
                     help='name of photo album to create (if it doesn\'t exist). Any uploaded photos will be added to this album.')
@@ -75,7 +75,7 @@ def save_cred(cred, auth_file):
     }
 
     with open(auth_file, 'w') as f:
-        print(json.dumps(cred_dict), file=f)
+        print(json.dumps(cred_dict, indent=4), file=f)
 
 # Generator to loop through all albums
 
