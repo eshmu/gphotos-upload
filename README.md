@@ -30,8 +30,10 @@ optional arguments:
 
 **NOTE** When selecting your application type in Step 4 of "Request an OAuth 2.0 client ID", please select "Other". There's also no need to carry out step 5 in that section.
 
-2. Replace `YOUR_CLIENT_ID` in the client_id.json file with the provided Client ID. 
-3. Replace `YOUR_CLIENT_SECRET` in the client_id.json file wiht the provided Client Secret.
+Example:
+
+2. Replace `YOUR_CLIENT_ID` in the client_id.json file with the provided Client ID in provided template.
+3. Replace `YOUR_CLIENT_SECRET` in the client_id.json file wiht the provided Client Secret in provided template.
 
 ### Installing dependencies and running the script
 
