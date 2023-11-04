@@ -200,7 +200,8 @@ def main():
     print("{:<50} | {:>8} | {} ".format("PHOTO ALBUM","# PHOTOS", "IS WRITEABLE?"))
 
     for a in getAlbums(session):
-        print("{:<50} | {:>8} | {} ".format(a["title"],a.get("mediaItemsCount", "0"), str(a.get("isWriteable", False))))
+        title = a["title"] if "title" in a else "no title"
+        print("{:<50} | {:>8} | {} ".format(title, a.get("mediaItemsCount", "0"), str(a.get("isWriteable", False))))
 
 if __name__ == '__main__':
   main()
